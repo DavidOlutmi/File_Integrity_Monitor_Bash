@@ -1,28 +1,15 @@
-# 🛡️ File Integrity Monitor (FIM) v1.0
+# 🛡️ File Integrity Monitor (FIM)
 
-**Author:** David Olutimi
-**Language:** Bash
-**Description:** A lightweight File Integrity Monitoring tool written in Bash that uses SHA256 hashing to detect unauthorized file modifications, deletions, or tampering. Includes email alerts for real-time monitoring.
-
----
-
-## 📘 Overview
-
-This File Integrity Monitor (FIM) creates a secure baseline of file hashes, compares them periodically, and alerts users when files have been changed or deleted. It can run in continuous monitoring mode and send alerts via **msmtp**.
+**Author:** David Olutimi  
+**Language:** Bash  
+**Description:**  
+A simple, dependency-free File Integrity Monitoring tool written in Bash. FIM uses SHA256 hashing to detect unauthorized changes to files and can alert you by email.
 
 ---
 
-## ⚙️ Features
+## 🚩 Quick Start: Install as a Command-Line Binary
 
-* Create and update **file baselines** with SHA256 hashing
-* Verify **file integrity** manually or automatically
-* **Email alerting** on unauthorized changes or deletions
-* Continuous file monitoring loop with **auto-refreshing** baselines
-* **Lightweight, dependency-free**, Bash-based solution
-
----
-
-## 📦 Installation
+You can install `fim.sh` to use it just like standard Unix commands (e.g., `ls`, `cat`, etc.), from anywhere in your shell:
 
 ```bash
 # Clone the repository
@@ -31,79 +18,74 @@ cd File_Integrity_Monitor_Bash
 
 # Make the script executable
 chmod +x fim.sh
+
+# Move it to a directory in your PATH, e.g. /usr/local/bin
+sudo mv fim.sh /usr/local/bin/fim
 ```
+
+Now, you can run `fim` from anywhere in your terminal as a regular command.
 
 ---
 
-## 🚀 Usage
+## 📝 Usage
 
 ```bash
-fim.sh [--baseline | --check | --monitor | --update | --stop]
+fim [--baseline | --check | --monitor | --update | --stop] [arguments...]
 ```
 
 ### Commands
 
 | Command                    | Description                                                   |
 | -------------------------- | ------------------------------------------------------------- |
-| `--baseline <file>`        | Creates or updates a SHA256 hash baseline for the target file |
-| `--check <file>`           | Compares the current file hash with the stored baseline       |
-| `--monitor <file> <email>` | Continuously monitors a file and sends email alerts on change |
-| `--update <file>`          | Manually updates the baseline hash for the file               |
-| `--stop`                   | Stops all active monitoring processes                         |
+| `--baseline <file>`        | Create or update SHA256 hash baseline for the target file     |
+| `--check <file>`           | Verify file integrity against stored baseline                 |
+| `--monitor <file> <email>` | Continuously monitor a file and send email alerts on change   |
+| `--update <file>`          | Manually update the baseline hash for a file                  |
+| `--stop`                   | Stop all active monitoring processes                          |
 
----
-
-## 🧰 Examples
-
-### Create a baseline
+### Examples
 
 ```bash
 fim --baseline /etc/passwd
-```
-
-### Check file integrity
-
-```bash
 fim --check /etc/passwd
-```
-
-### Start monitoring a file and receive email alerts
-
-```bash
 fim --monitor /etc/passwd you@example.com
-```
-
-### Stop all monitors
-
-```bash
+fim --update /etc/passwd
 fim --stop
 ```
 
 ---
 
-## 📁 Directory Structure
+## 📁 How It Works
+
+- **Create Baseline:** Stores SHA256 hash of specified files in `~/.fim/baselines.txt`
+- **Integrity Check:** Compares new SHA256 hash with stored baseline
+- **Monitoring:** Logs changes and can send email alerts (requires msmtp configuration)
+- **Logging:** Changes are logged to `~/.fim/fim_report.log`
+
+---
+
+## 📦 Directory Structure
 
 ```
 File_Integrity_Monitor_Bash/
-│
-├── fim                     # Main Bash script
-├── README.md               # Documentation
-└── ~/.fim/                 # Hidden user directory for baselines and logs
-    ├── baselines.txt       # Stores SHA256 baselines
-    └── fim_report.log      # Logs detected changes
+├── fim              # Main Bash script (becomes 'fim' binary when installed)
+├── README.md        # Documentation
+└── ~/.fim/          # Hidden user directory for baselines and logs
+    ├── baselines.txt
+    └── fim_report.log
 ```
 
 ---
 
-## 📧 Email Configuration (msmtp)
+## 📧 Email Alerts (Optional)
 
-To enable email alerts, install and configure **msmtp**:
+To enable email notifications, install and configure `msmtp`:
 
 ```bash
 sudo apt install msmtp
 ```
 
-Create a config file at `~/.msmtprc`:
+Place your configuration in `~/.msmtprc`:
 
 ```bash
 defaults
@@ -118,58 +100,45 @@ tls_starttls on
 tls_trust_file /etc/ssl/certs/ca-certificates.crt
 ```
 
-Then make it secure:
+Make it secure:
 
 ```bash
 chmod 600 ~/.msmtprc
-```
-
-Test it:
-
-```bash
 echo "Test message" | msmtp you@example.com
 ```
 
 ---
 
-## 🧠 How It Works
-
-1. When you create a baseline, the script calculates the **SHA256 hash** of the file and stores it in `~/.fim/baselines.txt`.
-2. When checking or monitoring, the script recomputes the hash and compares it to the stored value.
-3. If there’s a difference, it logs the event and (if monitoring) sends an email alert.
-
----
-
 ## 🔒 Cybersecurity Concepts Demonstrated
 
-* File Integrity Monitoring (FIM)
-* Hash-based verification (SHA256)
-* Incident detection and alerting
-* Bash scripting and automation
-* Log management
-
----
-
-## 🧩 Future Enhancements
-
-* Support for multiple file paths at once
-* JSON-based baseline storage
-* Integration with SIEM tools (Splunk, Wazuh)
-* Real-time event detection via **inotify**
-
+- File Integrity Monitoring
+- Hash Verification (SHA256)
+- Alerting and Logging
+- Bash Scripting Automation
 
 ---
 
 ## 📥 Download
 
-You can download the latest version here:
-[**Download fim.sh**](https://github.com/DavidOlutimi/File_Integrity_Monitor_Bash/blob/main/fim.sh)
+Grab the latest script from GitHub:  
+[**Download fim.sh**](https://github.com/DavidOlutmi/File_Integrity_Monitor_Bash/blob/main/fim.sh)
+
+Or install globally for command-line use!
+
+---
+
+## 🧩 Future Enhancements
+
+- Multiple file monitoring
+- JSON baseline option
+- SIEM integration (Splunk, Wazuh)
+- Real-time detection via `inotify`
 
 ---
 
 ## 🌐 Author
 
-**David Olutimi**
-Cybersecurity Enthusiast | SOC Analyst Path
-[LinkedIn](https://linkedin.com/in/david-olutimi-7109852aa)
+**David Olutimi**  
+Cybersecurity Enthusiast | SOC Analyst Path  
+[LinkedIn](https://linkedin.com/in/david-olutimi-7109852aa)  
 [GitHub](https://github.com/DavidOlutmi)
