@@ -1,4 +1,4 @@
-#!/bin/bash
+#!/bin/bash                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                            fim                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                              #!/bin/bash
 # ================================================================
 #  FILE INTEGRITY MONITOR (FIM) v1.0
 #  Author: David Olutimi
@@ -14,7 +14,7 @@
 #  Shown when the user runs the script without arguments.
 # ────────────────────────────────────────────────────────────────
 if [[ -z "$1" ]]; then
-    echo "┌──────────────────────────────────────────┐"
+     echo "┌──────────────────────────────────────────┐"
     sleep 0.1s
     echo "│   ███████╗██╗███╗   ███╗                 │"
     sleep 0.1s
@@ -34,7 +34,7 @@ if [[ -z "$1" ]]; then
     sleep 0.1s
     echo "│  Usage: fim [--baseline | --check        │"
     sleep 0.1s
-    echo "│              --monitor | --stop | --update] │"
+    echo "│           --monitor | --stop | --update] │"
     sleep 0.1s
     echo "└──────────────────────────────────────────┘"
     exit 0
@@ -47,9 +47,10 @@ fi
 #     Creates or updates a hash baseline for a specific file.
 #     The baseline is stored at ~/.fim/baselines.txt
 # ────────────────────────────────────────────────────────────────
+
 baselineMethod() {
     target="$1"
-
+    
     # Validate file existence
     if [ ! -f "$target" ]; then
         echo "[ERROR] File not found: $target"
@@ -61,14 +62,22 @@ baselineMethod() {
     hash_val=$(sha256sum "$absolute_path" | awk '{print $1}')
 
     # Ensure the baseline directory exists
-    mkdir -p ~/.fim
+    mkdir -p "$HOME/.fim" # Use "$HOME" variable for safety
+
+    # Define the new content to be inserted, escaping backslashes for sed's c command
+    NEW_LINE="$hash_val $absolute_path"
 
     # If baseline exists, replace it; else append it
-    if grep -q "$absolute_path" ~/.fim/baselines.txt 2>/dev/null; then
-        sed -i "/$absolute_path/c\\$hash_val $absolute_path" ~/.fim/baselines.txt
+    # We use '|' as the delimiter instead of '/' to avoid issues with file paths.
+    BASELINE_FILE="$HOME/.fim/baselines.txt" # Define the file variable clearly
+    
+    if grep -q "$absolute_path" "$BASELINE_FILE" 2>/dev/null; then
+        # 1. Change the search delimiter from / to |
+        # 2. Use the 'c' command (change) immediately followed by the replacement text
+        sed -i "\|$absolute_path|c\\$NEW_LINE" "$BASELINE_FILE"
         echo "[OK] Baseline updated for $absolute_path"
     else
-        echo "$hash_val $absolute_path" >> ~/.fim/baselines.txt
+        echo "$NEW_LINE" >> "$BASELINE_FILE"
         echo "[OK] Baseline created for $absolute_path"
     fi
 }
@@ -80,36 +89,56 @@ baselineMethod() {
 #     Compares the current file hash with the stored baseline
 #     to detect unauthorized modifications.
 # ────────────────────────────────────────────────────────────────
+#!/bin/bash
+
 checkBaselineMethod() {
     target="$1"
+
+    # Define baseline file
+    BASELINE_FILE="$HOME/.fim/baselines.txt"
 
     # Validate target file
     if [ ! -f "$target" ]; then
         echo "[ERROR] File not found: $target"
-        exit 1
+        return 1
     fi
 
-    # Extract the baseline hash for the file
+    # Resolve absolute path
     absolute_path=$(realpath "$target")
-    baseline_line=$(grep "$absolute_path" ~/.fim/baselines.txt 2>/dev/null)
+
+    # Extract the baseline line for this file
+    baseline_line=$(grep -F "$absolute_path" "$BASELINE_FILE" 2>/dev/null)
 
     if [ -z "$baseline_line" ]; then
         echo "[ERROR] No baseline found for $absolute_path"
-        exit 1
+        return 1
     fi
 
+    # Extract stored hash
     baseline_hash=$(echo "$baseline_line" | awk '{print $1}')
+    # Compute current hash
     current_hash=$(sha256sum "$absolute_path" | awk '{print $1}')
 
-    # Compare the stored and current hash values
+    # Compare hashes
     if [ "$current_hash" = "$baseline_hash" ]; then
         echo "[OK] No changes detected for $absolute_path"
-        exit 0
+        return 0
     else
         echo "[WARNING] File modified: $absolute_path"
         echo "         Previous hash: $baseline_hash"
         echo "         Current hash : $current_hash"
-        exit 1
+
+        # Backup baseline file before updating
+        cp "$BASELINE_FILE" "$BASELINE_FILE.bak"
+
+        # Prepare new line
+        NEW_LINE="$current_hash $absolute_path"
+
+        # Safely update baseline line
+        sed -i "\|$absolute_path|c\\$NEW_LINE" "$BASELINE_FILE"
+
+        echo "[INFO] Baseline updated for $absolute_path"
+        return 0
     fi
 }
 
@@ -208,21 +237,34 @@ EOF
 #  Purpose:
 #     Allows manual update of a file’s baseline.
 # ────────────────────────────────────────────────────────────────
+#!/bin/bash
+
 updateBaselineMethod() {
-    target="$2"
+    local target="$2"                 # Usually $1, not $2
+    local baseline_file="$HOME/.fim/baselines.txt"
 
     if [ ! -f "$target" ]; then
         echo "[ERROR] File not found: $target"
-        exit 1
+        return 1
     fi
 
+    local absolute_path
     absolute_path=$(realpath "$target")
+
+    local hash_val
     hash_val=$(sha256sum "$absolute_path" | awk '{print $1}')
 
-    # Replace the baseline entry with the new hash
-    sed -i "/$absolute_path/c\\$hash_val $absolute_path" ~/.fim/baselines.txt
-    echo "[INFO] Baseline updated for $absolute_path"
+    # Replace or add the baseline entry
+    if grep -qF "$absolute_path" "$baseline_file"; then
+        sed -i "\|$absolute_path|c\\$hash_val $absolute_path" "$baseline_file"
+        echo "[INFO] Baseline updated for $absolute_path"
+    else
+        echo "$hash_val $absolute_path" >> "$baseline_file"
+        echo "[INFO] Baseline added for $absolute_path"
+    fi
 }
+
+
 
 
 # ────────────────────────────────────────────────────────────────
@@ -277,3 +319,40 @@ case "$1" in
         exit 1
         ;;
 esac
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
