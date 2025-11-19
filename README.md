@@ -139,6 +139,6 @@ Or install globally for command-line use!
 ## 🌐 Author
 
 **David Olutimi**  
-Cybersecurity Enthusiast | SOC Analyst Path  
+Cybersecurity Enthusiast | Security Analyst Path  
 [LinkedIn](https://linkedin.com/in/david-olutimi-7109852aa)  
 [GitHub](https://github.com/DavidOlutmi)
